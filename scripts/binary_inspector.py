@@ -275,8 +275,8 @@ class BinaryInspector:
         if timestamp > 0:
             import datetime
             try:
-                info.compile_time = datetime.datetime.utcfromtimestamp(timestamp).isoformat()
-            except:
+                info.compile_time = datetime.datetime.fromtimestamp(timestamp, tz=datetime.timezone.utc).isoformat()
+            except Exception:
                 pass
         
         # Deep analysis: sections, imports, exports

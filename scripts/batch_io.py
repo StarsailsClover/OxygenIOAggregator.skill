@@ -497,6 +497,7 @@ class BatchIOEngine:
     
     def get_stats(self) -> Dict[str, Any]:
         """Get engine statistics and configuration."""
+        self._total_pages = sum(1 for path in self.base_dir.rglob("*") if path.is_file())
         return {
             "version": "26.0.0-alpha.2",
             "platform": self.platform.value,
@@ -506,6 +507,10 @@ class BatchIOEngine:
             "default_encoding": self.default_encoding,
             "mmap_threshold_bytes": self._mmap_threshold,
             "text_extensions_count": len(self._text_extensions),
+            "total_pages": self._total_pages,
+            "total_reads": self._total_reads,
+            "total_writes": self._total_writes,
+            "total_deletes": self._total_deletes,
         }
 
 

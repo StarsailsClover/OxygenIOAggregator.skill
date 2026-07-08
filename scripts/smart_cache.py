@@ -254,16 +254,16 @@ class WriteCoalescer:
         
         return pending_count
     
-    def flush(self) -> Tuple[int, int]:
+    def flush(self) -> Tuple[int, int, int]:
         """
         Flush all pending writes to disk.
         
         Returns:
-            Tuple of (files_written, total_bytes_written)
+            Tuple of (files_written, total_bytes_written, errors)
         """
         with self._lock:
             if not self._pending_writes:
-                return 0, 0
+                return 0, 0, 0
             
             # Copy pending writes and clear buffer
             pending = dict(self._pending_writes)
@@ -466,9 +466,12 @@ class CachedIO:
             self.cache.mark_clean(abs_path)
     
     def flush_writes(self) -> Tuple[int, int, int]:
-        """Flush all pending writes."""
+        """Flush all pending writes and mark cache entries clean."""
         if self.coalescer:
-            return self.coalescer.flush()
+            result = self.coalescer.flush()
+            for entry in self.cache.get_dirty_entries():
+                self.cache.mark_clean(entry.path)
+            return result
         return 0, 0, 0
     
     def invalidate_cache(self, path: Optional[str] = None):
@@ -537,9 +540,10 @@ def main():
         print(f"   Buffer size: {stats['write_coalescer']['buffer_size_mb']:.2f} MB")
         
         print("\n2. Flushing writes...")
-        written, bytes_written = cached_io.flush_writes()
+        written, bytes_written, errors = cached_io.flush_writes()
         print(f"   Files written: {written}")
         print(f"   Total bytes: {bytes_written}")
+        print(f"   Errors: {errors}")
         
         print("\n3. Testing read caching...")
         # First read (miss)
